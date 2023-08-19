@@ -137,7 +137,7 @@ class UsersDB():
     def getusername(self,id):
         """Returns a formatted username from the ID."""
         user = self.getuser(id)
-        return("%s %s (%s)"%( user[1], user[2], user[0]))
+        return f"{user[1]} {user[2]} ({user[0]})"
     
 
 # ex: Quick to load, so might as well do it early.
@@ -236,15 +236,14 @@ class Tool(DFU):
         buf = self.spiflashpeek(address, 50 * 4 )
         messages = []
         for i in range(0,50*4,4):
-            message = {}
             header = buf[i:i+4]
-            message["deleted"] = (header[0]) != 0x01
+            message = {"deleted": header[0] != 0x01}
             if header[1] == 0x1 :
                 message["read"] = True
             elif header[1] == 0x2:
                 message["read"] = False
             else:
-                message["read"] = "N/A"   
+                message["read"] = "N/A"
             message["order"] = (header[2])
             message["index"] = (header[3])
             if not message["deleted"]:
@@ -265,8 +264,7 @@ class Tool(DFU):
 
     def getkey(self,index):
         """Returns an Enhanced Privacy key from SPI Flash.  1-indexed"""
-        buf=self.spiflashpeek(0x59c0+16*index-16, 16)
-        return buf
+        return self.spiflashpeek(0x59c0+16*index-16, 16)
 
     def c5000peek(self,reg):
         """Returns one byte from a C5000 register."""
@@ -303,7 +301,7 @@ class Tool(DFU):
         #time.sleep(0.1)
         status=self.get_status() #this gets the status
         buf=self.upload(1,1024,0) #Peek the 1024 byte dmesg buffer.
-        
+
         #Okay, so at this point we have the buffer, but it's a ring
         #buffer that might have already looped, so we need to reorder
         #if that is the case or crop it if it isn't.
@@ -315,14 +313,11 @@ class Tool(DFU):
                     tail=tail+chr(b)
                 else:
                     head=""
+            elif b>0:
+                head=head+chr(b)
             else:
-                if b>0:
-                    head=head+chr(b)
-                else:
-                    break
-        if head is None:
-            return tail
-        return head+tail
+                break
+        return tail if head is None else head+tail
 
 
         
@@ -334,7 +329,7 @@ class Tool(DFU):
         def bcd2freq(bcd):
             freq_whole = "%02x"%ord(bcd[3]) + ("%02x"%ord(bcd[2]))[0]
             freq_decimal = ("%02x"%ord(bcd[2]))[1] + "%02x"%ord(bcd[1]) + "%02x"%ord(bcd[0])
-            return "%s.%s"%(freq_whole,freq_decimal)
+            return f"{freq_whole}.{freq_decimal}"
 
         Frequency = namedtuple("Frequency","rx_freq tx_freq vox1 vox10 rx_low_voltage rx_full_voltage RSSI1    \
                                 RSSI4 analog_mic digital_mic freq_adjust_high freq_adjust_mid freq_adjust_low1 \
@@ -437,12 +432,9 @@ def hexdump(dfu,address,length=512):
     for b in buf:
         sys.stdout.write("%02x "%b)
         i=i+1
-        if(b > 32 and b < 127 ):
-            cbuf = cbuf + chr(b)
-        else:
-            cbuf = cbuf + "."
+        cbuf = cbuf + chr(b) if (b > 32 and b < 127 ) else f"{cbuf}."
         if i%16==0:
-            sys.stdout.write(" " + cbuf)
+            sys.stdout.write(f" {cbuf}")
             sys.stdout.write("\n")
             cbuf=""
         elif i%8==0:
@@ -466,7 +458,7 @@ def ParseHexOrRegName(address):
 
 def ShowRegNameIfKnown(address):
     if address in sfr_addresses:
-        sys.stdout.write(' ; '+ sfr_addresses[address] )
+        sys.stdout.write(f' ; {sfr_addresses[address]}')
 
 
 def hexdump32(dfu,address,length=512):
@@ -480,7 +472,7 @@ def hexdump32(dfu,address,length=512):
     while i<length:
         if i%16==0:
             if know_name: # if at least one address is a known SFR, show them
-               sys.stdout.write("("+names+")")
+                sys.stdout.write(f"({names})")
             sys.stdout.write("\n%08X: "%(adr+i))
             know_name=0
             names=""
@@ -490,12 +482,12 @@ def hexdump32(dfu,address,length=512):
             know_name=1
             names = names+sfr_addresses[adr+i]
         else:
-            names = names+"?"
+            names = f"{names}?"
         if i%16 < 12:
-            names = names+","
-        i=i+4
+            names = f"{names},"
+        i += 4
     if know_name: # if known, show SFR names for the last line
-        sys.stdout.write("("+names+")")
+        sys.stdout.write(f"({names})")
 
 
 def bindump32(dfu,address,length=256):
@@ -511,7 +503,7 @@ def bindump32(dfu,address,length=256):
         dw = buf[i] | (buf[i+1]<<8) | (buf[i+2]<<16) | (buf[i+3]<<24)
         sys.stdout.write( '{0:032b}'.format(dw) )
         ShowRegNameIfKnown( adr+i )
-        i=i+4
+        i += 4
 
 
 def dump(dfu,filename,address):

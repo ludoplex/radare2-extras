@@ -32,9 +32,8 @@ def get_var(args, name, default):
 
 def slurp(file):
 	try:
-		f = open (file, "r")
-		output = f.read()
-		f.close()
+		with open (file, "r") as f:
+			output = f.read()
 		return output
 	except:
 		return ""
@@ -70,7 +69,7 @@ def filter_many(str,arr):
 
 def filter_tags(str,arr):
 	for a in arr:
-		a[0] ="<!--("+a[0]+")-->"
+		a[0] = f"<!--({a[0]})-->"
 	return filter_many(str,arr)
 
 class Mvc():

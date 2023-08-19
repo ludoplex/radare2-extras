@@ -40,30 +40,28 @@ if not APIKEY:
 	sys.exit(1)
 
 def query_hex(xxxx, limit):
-	query = []
-	query.append(hex_pattern(xxxx))
-	result = bly.search(query, limit=limit, exact=False)
-	if result.has_key('error'):
-		print ("Error" + result['error']['message'])
-		return
-	return result
+    query = [hex_pattern(xxxx)]
+    result = bly.search(query, limit=limit, exact=False)
+    if result.has_key('error'):
+    	print ("Error" + result['error']['message'])
+    	return
+    return result
 
 def get_metadata(xxxx):
-	m = {}
-	meta = bly.get_metadata(xxxx)
-	try:
-		#print meta
-		M = meta[xxxx]['version_info']
-		m['fn'] = M['original_file_name']
-		m['fd'] = M['file_description']
-	except:
-		m['fn'] = ""
-		m['fd'] = ""
-		pass #raise
-	return m 
+    m = {}
+    meta = bly.get_metadata(xxxx)
+    try:
+        #print meta
+        M = meta[xxxx]['version_info']
+        m['fn'] = M['original_file_name']
+        m['fd'] = M['file_description']
+    except:
+        m['fn'] = ""
+        m['fd'] = ""
+    return m 
 
 def get_bytes(a, l):
-	return r2p.cmd("p8 %s@%s"%(l,a)).strip()
+    return r2p.cmd(f"p8 {l}@{a}").strip()
 
 def query_all_imports(limit, wide):
 	query = []

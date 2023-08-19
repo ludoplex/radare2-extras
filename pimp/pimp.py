@@ -58,18 +58,18 @@ class R2(object):
         return int(self.r2.cmd("s"), 16)
 
     def switch_flagspace(self, name):
-        self.r2.cmd("fs {}".format(name))
+        self.r2.cmd(f"fs {name}")
 
     def set_flag(self, section, name, size, address):
-        name = "{}.{}.{}".format(self.name, section, name)
-        self.r2.cmd("f {} {} @ {}".format(name, size, address))
+        name = f"{self.name}.{section}.{name}"
+        self.r2.cmd(f"f {name} {size} @ {address}")
 
     def get_flags(self, section=None):
         flags = {}
         for flag in self.r2.cmdj("fj"):
             name = flag["name"]
             offset = flag["offset"]
-            if section and name.startswith("{}.{}.".format(self.name, section)):
+            if section and name.startswith(f"{self.name}.{section}."):
                 flags[name] = offset
             elif not section:
                 flags[name] = offset
@@ -80,22 +80,21 @@ class R2(object):
             self.r2.cmd("CC {} @ {:#x}".format(comment, address))
         else:
             self.r2.cmd("CC-".format(comment))
-            self.r2.cmd("CC {}".format(comment))
+            self.r2.cmd(f"CC {comment}")
 
     def integer(self, s):
         regs = self.get_regs()
         flags = self.get_flags()
         if s in regs:
-            v = regs[s]
+            return regs[s]
         elif s in flags:
-            v = flags[s]
+            return flags[s]
         elif s in self.exports:
-            v = self.exports[s]
+            return self.exports[s]
         elif s.startswith("0x"):
-            v = int(s, 16)
+            return int(s, 16)
         else:
-            v = int(s)
-        return v
+            return int(s)
 
 tritonarch = {
     "x86": {
@@ -314,11 +313,7 @@ class Pimp(object):
             _pc = pc
 
         inst = self.disassemble_inst(_pc)
-        if take:
-            target = inst.getFirstOperand().getValue()
-        else:
-            target = _pc + inst.getSize()
-
+        target = inst.getFirstOperand().getValue() if take else _pc + inst.getSize()
         pco = triton.getPathConstraints()
         cstr = triton.ast.equal(triton.ast.bvtrue(), triton.ast.bvtrue())
 
@@ -330,17 +325,17 @@ class Pimp(object):
                     taken = branch["isTaken"]
                     src = branch["srcAddr"]
                     dst = branch["dstAddr"]
-                    bcstr = branch["constraint"]
-
                     isPreviousBranchConstraint = (src != _pc) and taken
                     isBranchToTake =  src == _pc and dst == target
 
                     if isPreviousBranchConstraint or isBranchToTake:
+                        bcstr = branch["constraint"]
+
                         cstr = triton.ast.land(cstr, bcstr)
 
         if self.input_type == "string":
             addrs = [self.inputs[inpt] for inpt in self.inputs]
-            for inpt in addrs[0:-1]:
+            for inpt in addrs[:-1]:
                 symExp = triton.getSymbolicExpressionFromId(inpt.getId()).getAst()
                 cstr = triton.ast.land(cstr, triton.ast.lnot(triton.ast.equal(symExp, triton.ast.bv(0, 8))))
 
@@ -370,10 +365,7 @@ class Pimp(object):
 
     @staticmethod
     def isMapped(addr):
-        for m in cache:
-            if m["start"] <= addr < m["start"] + len(m["data"]):
-                return True
-        return False
+        return any(m["start"] <= addr < m["start"] + len(m["data"]) for m in cache)
 
     def plugin(self, a):
         def _call(s):

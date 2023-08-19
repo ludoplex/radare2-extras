@@ -77,8 +77,7 @@ def get_args():
 
     arg_parser.set_defaults(is_comments=True, is_functions=True, is_names=True)
 
-    args = arg_parser.parse_args()
-    return args
+    return arg_parser.parse_args()
 
 
 
@@ -156,8 +155,7 @@ def idb_parse(args):
         outfile = open(args.out_file, 'w')
         write_header()
 
-        print("[+] Starting conversion from '%s' to '%s'" %
-                (args.idb_file, args.out_file))
+        print(f"[+] Starting conversion from '{args.idb_file}' to '{args.out_file}'")
 
         if args.is_functions:
             idb2r2_functions(api)
@@ -238,8 +236,8 @@ types = []
 
 def idc_functions_parse(idc):
 
-	# MakeFunction (0XF3C99,0XF3CA8);
-	mkfun_re = re.compile("""
+    # MakeFunction (0XF3C99,0XF3CA8);
+    mkfun_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*MakeFunction[ \t]*\(
 		(?P<fstart>0[xX][\dA-Fa-f]{1,8})	# Function start
@@ -247,21 +245,21 @@ def idc_functions_parse(idc):
 		(?P<fend>0[xX][\dA-Fa-f]{1,8})		# Function end
 		[ \t]*\);[ \t]*$
 		""", re.VERBOSE)
-	mkfun_group_name = dict([(v,k) for k,v in mkfun_re.groupindex.items()])
-	mkfun = mkfun_re.finditer(idc)
-	for match in mkfun :
-		fun = Func()
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mkfun_group_name[group_index+1] == "fstart" :
-					fun.address = int(group, 16)
-				if mkfun_group_name[group_index+1] == "fend" :
-					fun.size = int(group, 16) - fun.address
+    mkfun_group_name = dict([(v,k) for k,v in mkfun_re.groupindex.items()])
+    mkfun = mkfun_re.finditer(idc)
+    for match in mkfun :
+    	fun = Func()
+    	for group_index,group in enumerate(match.groups()) :
+    		if group :
+    			if mkfun_group_name[group_index+1] == "fstart" :
+    				fun.address = int(group, 16)
+    			if mkfun_group_name[group_index+1] == "fend" :
+    				fun.size = int(group, 16) - fun.address
 
-		functions.append(fun)
+    	functions.append(fun)
 
-	# SetFunctionFlags (0XF3C99, 0x400);
-	mkfunflags_re = re.compile("""
+    # SetFunctionFlags (0XF3C99, 0x400);
+    mkfunflags_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*SetFunctionFlags[ \t*]\(
 		(?P<fstart>0[xX][\dA-Fa-f]{1,8})	# Function start
@@ -269,22 +267,16 @@ def idc_functions_parse(idc):
 		(?P<flags>0[xX][\dA-Fa-f]{1,8})		# Flags
 		[ \t]*\);[ \t]*$
 	""", re.VERBOSE)
-	mkfunflags_group_name = dict([(v,k) for k,v in mkfunflags_re.groupindex.items()])
-	mkfunflags = mkfunflags_re.finditer(idc)
-	for match in mkfunflags :
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mkfunflags_group_name[group_index+1] == "fstart" :
-					addr = int(group, 16)
-				if mkfunflags_group_name[group_index+1] == "flags" :
-					for fun in functions :
-						if fun.address == addr :
-							pass # TODO: parse flags
-
-
-	# MakeFrame (0XF3C99, 0, 0, 0);
-	# MakeName (0XF3C99, "SIO_port_setup_S");
-	mkname_re = re.compile("""
+    mkfunflags_group_name = dict([(v,k) for k,v in mkfunflags_re.groupindex.items()])
+    mkfunflags = mkfunflags_re.finditer(idc)
+    for match in mkfunflags:
+        for group_index,group in enumerate(match.groups()):
+            if mkfunflags_group_name[group_index+1] == "fstart":
+                if group:
+                    addr = int(group, 16)
+    # MakeFrame (0XF3C99, 0, 0, 0);
+    # MakeName (0XF3C99, "SIO_port_setup_S");
+    mkname_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*MakeName[ \t]*\(
 		(?P<fstart>0[xX][\dA-Fa-f]{1,8})	# Function start
@@ -292,20 +284,20 @@ def idc_functions_parse(idc):
 		"(?P<fname>.*)"						# Function name
 		[ \t]*\);[ \t]*$
 	""", re.VERBOSE)
-	mkname_group_name = dict([(v,k) for k,v in mkname_re.groupindex.items()])
-	mkname = mkname_re.finditer(idc)
-	for match in mkname :
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mkname_group_name[group_index+1] == "fstart" :
-					addr = int(group, 16)
-				if mkname_group_name[group_index+1] == "fname" :
-					for fun in functions :
-						if fun.address == addr :
-							fun.name = group
+    mkname_group_name = dict([(v,k) for k,v in mkname_re.groupindex.items()])
+    mkname = mkname_re.finditer(idc)
+    for match in mkname :
+    	for group_index,group in enumerate(match.groups()) :
+    		if group :
+    			if mkname_group_name[group_index+1] == "fstart" :
+    				addr = int(group, 16)
+    			if mkname_group_name[group_index+1] == "fname" :
+    				for fun in functions :
+    					if fun.address == addr :
+    						fun.name = group
 
-	# SetType (0XFFF72, "__int32 __cdecl PCI_ByteWrite_SL(__int32 address, __int32 value)");
-	mkftype_re = re.compile("""
+    # SetType (0XFFF72, "__int32 __cdecl PCI_ByteWrite_SL(__int32 address, __int32 value)");
+    mkftype_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*SetType[ \t]*\(
 		(?P<fstart>0[xX][\dA-Fa-f]{1,8})	# Function start
@@ -313,20 +305,20 @@ def idc_functions_parse(idc):
 		"(?P<ftype>.*)"						# Function type
 		[ \t]*\);[ \t]*$
 	""", re.VERBOSE)
-	mkftype_group_name = dict([(v,k) for k,v in mkftype_re.groupindex.items()])
-	mkftype = mkftype_re.finditer(idc)
-	for match in mkftype :
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mkftype_group_name[group_index+1] == "fstart" :
-					addr = int(group, 16)
-				if mkftype_group_name[group_index+1] == "ftype" :
-					for fun in functions :
-						if fun.address == addr :
-							fun.ftype = group
+    mkftype_group_name = dict([(v,k) for k,v in mkftype_re.groupindex.items()])
+    mkftype = mkftype_re.finditer(idc)
+    for match in mkftype :
+    	for group_index,group in enumerate(match.groups()) :
+    		if group :
+    			if mkftype_group_name[group_index+1] == "fstart" :
+    				addr = int(group, 16)
+    			if mkftype_group_name[group_index+1] == "ftype" :
+    				for fun in functions :
+    					if fun.address == addr :
+    						fun.ftype = group
 
-	# MakeNameEx (0xF3CA0, "return", SN_LOCAL);
-	mklocal_re = re.compile("""
+    # MakeNameEx (0xF3CA0, "return", SN_LOCAL);
+    mklocal_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*MakeNameEx[ \t]*\(
 		(?P<laddr>0[xX][\dA-Fa-f]{1,8})		# Local label address
@@ -335,17 +327,17 @@ def idc_functions_parse(idc):
 		[ \t]*\,[ \t]*SN_LOCAL
 		[ \t]*\);[ \t]*$
 	""", re.VERBOSE)
-	mklocal_group_name = dict([(v,k) for k,v in mklocal_re.groupindex.items()])
-	mklocal = mklocal_re.finditer(idc)
-	for match in mklocal :
-		lab = Llabel()
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mklocal_group_name[group_index+1] == "laddr" :
-					lab.address = int(group, 16)
-				if mklocal_group_name[group_index+1] == "lname" :
-					lab.name = group
-		llabels.append(lab)
+    mklocal_group_name = dict([(v,k) for k,v in mklocal_re.groupindex.items()])
+    mklocal = mklocal_re.finditer(idc)
+    for match in mklocal :
+    	lab = Llabel()
+    	for group_index,group in enumerate(match.groups()) :
+    		if group :
+    			if mklocal_group_name[group_index+1] == "laddr" :
+    				lab.address = int(group, 16)
+    			if mklocal_group_name[group_index+1] == "lname" :
+    				lab.name = group
+    	llabels.append(lab)
 
 # ----------------------------------------------------------------------
 
@@ -355,8 +347,8 @@ def idc_enums_parse(idc):
 # ----------------------------------------------------------------------
 
 def idc_structs_parse(idc):
-	# id = AddStrucEx (-1, "struct_MTRR", 0);
-	mkstruct_re = re.compile("""
+    # id = AddStrucEx (-1, "struct_MTRR", 0);
+    mkstruct_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*id[ \t]*=[ \t]*AddStrucEx[ \t]*\(
 		[ \t]*-1[ \t]*,[ \t]*
@@ -364,23 +356,23 @@ def idc_structs_parse(idc):
 		[ \t]*\,[ \t]*0
 		[ \t]*\);[ \t]*$
 	""", re.VERBOSE)
-	mkstruct_group_name = dict([(v,k) for k,v in mkstruct_re.groupindex.items()])
-	mkstruct = mkstruct_re.finditer(idc)
-	for match in mkstruct :
-		s = Struct()
-		for group_index,group in enumerate(match.groups()) :
-			if group :
-				if mkstruct_group_name[group_index+1] == "sname" :
-					s.name = group
-		structs.append(s)
+    mkstruct_group_name = dict([(v,k) for k,v in mkstruct_re.groupindex.items()])
+    mkstruct = mkstruct_re.finditer(idc)
+    for match in mkstruct:
+        s = Struct()
+        for group_index,group in enumerate(match.groups()):
+            if mkstruct_group_name[group_index+1] == "sname":
+                if group:
+                    s.name = group
+        structs.append(s)
 
-	# Case 1: not nested structures
-	# =============================
-	# id = GetStrucIdByName ("struct_header");
-	# mid = AddStructMember(id,"BCPNV", 0, 0x5000c500, 0, 7);
-	# mid = AddStructMember(id,"_", 0X7, 0x00500, -1, 1);
-	# mid = AddStructMember(id, "BCPNV_size",0X8, 0x004500, -1, 1);
-	mkstruct_re = re.compile("""
+    # Case 1: not nested structures
+    # =============================
+    # id = GetStrucIdByName ("struct_header");
+    # mid = AddStructMember(id,"BCPNV", 0, 0x5000c500, 0, 7);
+    # mid = AddStructMember(id,"_", 0X7, 0x00500, -1, 1);
+    # mid = AddStructMember(id, "BCPNV_size",0X8, 0x004500, -1, 1);
+    mkstruct_re = re.compile("""
 		(?m)								# Multiline
 		^[ \t]*id[ \t]*=[ \t]*GetStrucIdByName[ \t]*\(
 		[ \t]*-1[ \t]*,[ \t]*
@@ -457,20 +449,19 @@ def idc_generate_r2(out_file):
 # ----------------------------------------------------------------------
 
 def idc_parse(args):
-	print("[+] Starting convertion from '%s' to '%s'" %
-		(args.idc_file, args.out_file))
-	idc_file = open(args.idc_file, "r")
-	idc = idc_file.read()
-	idc_enums_parse(idc)
-	idc_structs_parse(idc)
-	if args.is_functions:
-		idc_functions_parse(idc)
-	if args.is_comments:
-		idc_comments_parse(idc)
-	idc_generate_r2(args.out_file)
-	print("[+] Convertion done.\n")
-	print("[!] Execute: r2 -i %s [program]\n" %
-		(args.out_file))
+    print(f"[+] Starting convertion from '{args.idc_file}' to '{args.out_file}'")
+    idc_file = open(args.idc_file, "r")
+    idc = idc_file.read()
+    idc_enums_parse(idc)
+    idc_structs_parse(idc)
+    if args.is_functions:
+    	idc_functions_parse(idc)
+    if args.is_comments:
+    	idc_comments_parse(idc)
+    idc_generate_r2(args.out_file)
+    print("[+] Convertion done.\n")
+    print("[!] Execute: r2 -i %s [program]\n" %
+    	(args.out_file))
 
 #
 # End of IDC Parsing

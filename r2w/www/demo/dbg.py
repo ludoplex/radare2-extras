@@ -9,7 +9,7 @@ core.cmd_str(".dr*")
 regs = core.cmd_str("dr")
 stak = core.cmd_str("px 64@esp")
 def disasm(addr):
-	return core.cmd_str("pd 80@%s"%addr)
+	return core.cmd_str(f"pd 80@{addr}")
 
 delta = get_arg(args, "delta", "")
 if delta == "":
@@ -35,7 +35,7 @@ def drawlines(code):
 			foo = foo.replace(' .',' <img src=/img/line-corner-down.gif>')
 			foo = foo.replace('`','<img src=/img/line-corner-up.gif>')
 			foo = foo.replace('|','<img src=/img/line-vertical.gif>')
-			out += foo + "<br />"
+			out += f"{foo}<br />"
 		except:
 			pass
 	return out 

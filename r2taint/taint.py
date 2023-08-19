@@ -37,19 +37,15 @@ def get_sub_registers(register):
 		]:
 		if register in sub_registers:
 			index = sub_registers.index(register)
-			if index < 3:
-				return sub_registers[index:] # AX has [AH,AL]
-			else:
-				return [sub_registers[index]] # AH hasn't AL
+			return sub_registers[index:] if index < 3 else [sub_registers[index]]
 	return [register]
 
 def taint_blacklist(instr):
-	if instr["mnemonic"] in ("xor",):
-		if instr["opex"]["operands"][0]["type"] == "reg" and instr["opex"]["operands"][1]["type"] == "reg":
-			if instr["opex"]["operands"][0]["value"] == instr["opex"]["operands"][1]["value"]:
-				return True
-	else:
+	if instr["mnemonic"] not in ("xor",):
 		return False
+	if instr["opex"]["operands"][0]["type"] == "reg" and instr["opex"]["operands"][1]["type"] == "reg":
+		if instr["opex"]["operands"][0]["value"] == instr["opex"]["operands"][1]["value"]:
+			return True
 
 regs_taint = set()
 mems_taint = set()
@@ -113,7 +109,7 @@ def init_taint(args):
 
 		flag = get_flag_by_name(mem)
 		if not flag:
-			flag = get_flag_by_name("fcnvar." + mem)
+			flag = get_flag_by_name(f"fcnvar.{mem}")
 		if flag:
 			for i in xrange(flag["size"]):
 				mems_taint.add(flag["offset"]+i)
@@ -214,27 +210,27 @@ def is_function(addr):
 	return r2.cmdj("afdj @{addr}".format(addr=addr)) != {}
 
 def get_function_range(addr):
-	_range = set()
-	for instr in r2.cmdj("pdrj @{addr}".format(addr=addr)) or {}:
-		_range.add(instr["offset"])
-	return _range
+	return {
+		instr["offset"]
+		for instr in r2.cmdj("pdrj @{addr}".format(addr=addr)) or {}
+	}
 
 def get_function_jumps(addr):
 	jumps = {}
 	for xref in r2.cmdj("afxj @{addr}".format(addr=addr)):
 		if xref["type"] == "code":
-			if not xref["from"] in jumps:
+			if xref["from"] not in jumps:
 				jumps[xref["from"]] = []
 			jumps[xref["from"]].append(xref["to"]) 											# true case
 			jumps[xref["from"]].append(xref["from"] + get_instruction_size(xref["from"]))	# false case
 	return jumps
 
 def get_function_end_addrs(addr):
-	ends = []
-	for bb in r2.cmdj("afbj @{addr}".format(addr=addr)):
-		if not "jump" in bb:
-			ends.append( get_n_instruction_addr(bb["addr"], bb["ninstr"]) )
-	return ends
+	return [
+		get_n_instruction_addr(bb["addr"], bb["ninstr"])
+		for bb in r2.cmdj("afbj @{addr}".format(addr=addr))
+		if "jump" not in bb
+	]
 
 functions = []
 def get_current_function(addr):

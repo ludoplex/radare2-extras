@@ -3,7 +3,7 @@ from r2.r_bin import *
 
 foo=get_arg(args, 'q', '')
 output="<div class='work-zone'>"
-output+="<h2>"+foo+"</h2>\n"
+output += f"<h2>{foo}" + "</h2>\n"
 if foo == "Imports":
 	# TODO: Use it from RCore or GTFO
 	b=RBin ()

@@ -6,11 +6,7 @@ output = r2w_header() + """
 <br />
 """
 
-if content != "":
-	output += "File contents: %s"%content
-else:
-	output += "No file uploaded."
-
+output += f"File contents: {content}" if content != "" else "No file uploaded."
 output +="""
 <input type=submit value=Upload />
 </form>
