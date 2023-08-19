@@ -14,7 +14,7 @@ argc = len(sys.argv)
 args_ok = False
 if argc == 2 and os.path.isfile(sys.argv[1]):
 	args_ok = True
-	
+
 if argc == 3:
 	args_ok = True
 
@@ -24,7 +24,7 @@ if not args_ok:
 			vendors = pkg_resources.resource_listdir("cmsis_svd", "data")
 			print('\n'.join(vendors))
 		elif argc == 2:
-			svds = pkg_resources.resource_listdir("cmsis_svd", "data/%s"%(sys.argv[1]))
+			svds = pkg_resources.resource_listdir("cmsis_svd", f"data/{sys.argv[1]}")
 			print('\n'.join(svds))
 		else:
 			raise Exception('')
@@ -93,7 +93,7 @@ for p in svd_dict['peripherals']:
 		bt = (offs % 8)
 		s += " " + r['name']
 		if at != addr:
-			fname = "%s.%s"%(p["name"], r["name"])
+			fname = f'{p["name"]}.{r["name"]}'
 			print_flag(fname, size, at)
 	print_comment(s, addr)
 

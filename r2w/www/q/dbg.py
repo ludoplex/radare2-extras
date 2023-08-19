@@ -3,10 +3,9 @@ from r2w import *
 core._cmd(".dr*", False)
 def disasm():
 	ret = core.cmd_str("pd 256@eip")
-	out = ""
-	for a in ret.split('\n'):
-		out += "<div class=\"line\">%s</div>"%escape(a)
-	return out
+	return "".join(
+		"<div class=\"line\">%s</div>" % escape(a) for a in ret.split('\n')
+	)
 
 foo=get_arg(args, 'q', '')
 off=get_arg(args, 'off', '')

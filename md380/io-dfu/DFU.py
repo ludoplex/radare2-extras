@@ -127,13 +127,14 @@ class DFU(object):
         time = self.upload(0, 7)  # Read the time bytes as BCD.
         # hexdump("Time is: "+time);
         from datetime import datetime
-        dt = datetime(self.bcd(time[0]) * 100 + self.bcd(time[1]),
-                      self.bcd(time[2]),
-                      self.bcd(time[3]),
-                      self.bcd(time[4]),
-                      self.bcd(time[5]),
-                      self.bcd(time[6]))
-        return dt
+        return datetime(
+            self.bcd(time[0]) * 100 + self.bcd(time[1]),
+            self.bcd(time[2]),
+            self.bcd(time[3]),
+            self.bcd(time[4]),
+            self.bcd(time[5]),
+            self.bcd(time[6]),
+        )
 
     def set_time(self):
         from datetime import datetime
@@ -223,12 +224,13 @@ class DFU(object):
     def upload(self, block_number, length, index=0):
         if self.verbose:
             print("Fetching block 0x%x." % block_number)
-        data = self._device.ctrl_transfer(0xA1,  # request type
-                                          Request.UPLOAD,  # request
-                                          block_number,  # wValue
-                                          index,  # index
-                                          length)  # length
-        return data
+        return self._device.ctrl_transfer(
+            0xA1,  # request type
+            Request.UPLOAD,  # request
+            block_number,  # wValue
+            index,  # index
+            length,
+        )
 
     def get_command(self):
         data = self._device.ctrl_transfer(0xA1,  # request type

@@ -29,9 +29,7 @@ cfg = None
 		#print ("  %s %s"%(b.addr, b.size))
 
 def arch(x):
-	if x == "AMD64":
-		return "x86"
-	return x
+	return "x86" if x == "AMD64" else x
 
 def prot(x):
 	if x == 7:
@@ -40,9 +38,7 @@ def prot(x):
 		return "mr-x"
 	if x == 3:
 		return "mrw-"
-	if x == 1:
-		return "mr--"
-	return "----"
+	return "mr--" if x == 1 else "----"
 
 # p.analyses.BackwardSlice    p.analyses.CFG              p.analyses.DFG              p.analyses.StaticHooker
 # p.analyses.BinDiff          p.analyses.CFGAccurate      p.analyses.Disassembly      p.analyses.VFG

@@ -24,31 +24,35 @@ def pyio(a):
 		serial_number = device.serial_number
 		dfu.release_device(device)
 		device = PwnedDFUDevice()
-		print("MyPyIO Opening %s"%(path))
-		return 1234 
+		print(f"MyPyIO Opening {path}")
+		return 1234
+
 	def _check(path, many):
-		print("python-check %s"%(path))
-		return path[0:9] == "pwndfu://"
+		print(f"python-check {path}")
+		return path[:9] == "pwndfu://"
+
 	def _read(offset, length):
 		global device
 		res = device.read_memory(address, length)
 		print("python-read")
 		return res
+
 	def _seek(offset, whence):
 		print("python-seek")
 		if whence == 0: # SET
 			return offset
 		if whence == 1: # CUR
 			return offset
-		if whence == 2: # END
-			return ROM_SIZE
-		return ROM_SIZE
+		return ROM_SIZE if whence == 2 else ROM_SIZE
+
 	def _write(offset, data, length):
 		print("TODO: python-write")
 		return True
+
 	def _system(cmd):
-		print("pwndfu://%s"%(cmd))
+		print(f"pwndfu://{cmd}")
 		return True
+
 	return {
 		"name": "pwndfu",
 		"license": "GPL",

@@ -5,9 +5,7 @@ try:
 	# TODO: we should open this once
 	h = RHash(False)
 	ret = h.do_md4 (msg, len(msg)-1)
-	result = ""
-	for i in range(0, Size_MD5):
-		result += "%02x"%ord(ret[i])
+	result = "".join("%02x"%ord(ret[i]) for i in range(0, Size_MD5))
 except:
 	msg = ""
 	result = ""

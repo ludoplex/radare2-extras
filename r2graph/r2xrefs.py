@@ -46,7 +46,7 @@ def just_print(graph):
             return Fore.LIGHTWHITE_EX
 
     def walk(node, deep):
-        print("%s%s" % (" "*deep, get_node_color(node) + node + Fore.RESET))
+        print(f'{" " * deep}{get_node_color(node) + node + Fore.RESET}')
         for sub_node in nodes[node]:
             walk(sub_node, deep+1)
 
@@ -86,10 +86,10 @@ def d(graph):
     known_edges = set()
     def walk(node):
         for sub_node in nodes[node]:
-            if not graph.node(sub_node) in known_nodes:
+            if graph.node(sub_node) not in known_nodes:
                 dot.add_node(pydot.Node(sub_node, style="filled", fillcolor=get_node_color(sub_node)[0], fontcolor=get_node_color(sub_node)[1]))
                 known_nodes.add(graph.node(sub_node))
-            if not (node, sub_node) in known_edges:
+            if (node, sub_node) not in known_edges:
                 dot.add_edge(pydot.Edge(node, sub_node))
                 known_edges.add((node, sub_node))
             walk(sub_node)
@@ -97,14 +97,14 @@ def d(graph):
     nodes = graph.to_dict()
     dot = pydot.Dot(graph_type='digraph')
     for node in graph.roots:
-        if not graph.node(node) in known_nodes:
+        if graph.node(node) not in known_nodes:
             dot.add_node(pydot.Node(node, style="filled", fillcolor=get_node_color(node)[0], fontcolor=get_node_color(node)[1]))
             known_nodes.add(graph.node(node))
         walk(node)
 
     tmpfile = NamedTemporaryFile(suffix='.dot', delete=False)
     dot.write_dot(tmpfile.name)
-    system('xdot %s &' % tmpfile.name)
+    system(f'xdot {tmpfile.name} &')
 
 def w(graph):
     '''WebGL 3D graph (regards https://github.com/vasturiano/3d-force-graph)'''
@@ -219,7 +219,7 @@ def w(graph):
     known_edges = set()
     def walk(node):
         for sub_node in nodes[node]:
-            if not graph.node(sub_node) in known_nodes:
+            if graph.node(sub_node) not in known_nodes:
                 xrefs['nodes'].append(
                     {
                       "id": graph.node(sub_node),
@@ -229,7 +229,7 @@ def w(graph):
                     }
                 )
                 known_nodes.add(graph.node(sub_node))
-            if not (graph.node(node), graph.node(sub_node)) in known_edges:
+            if (graph.node(node), graph.node(sub_node)) not in known_edges:
                 xrefs['links'].append(
                     {
                       "source": graph.node(node),
@@ -242,7 +242,7 @@ def w(graph):
 
     nodes = graph.to_dict()
     for node in graph.roots:
-        if not graph.node(node) in known_nodes:
+        if graph.node(node) not in known_nodes:
             xrefs['nodes'].append(
                 {
                   "id": graph.node(node),
@@ -257,7 +257,7 @@ def w(graph):
     tmpfile = NamedTemporaryFile(suffix='.html', delete=False)
     with open(tmpfile.name, 'w') as o:
         o.write( WWW.replace('__xrefs__', dumps(xrefs)) )
-    system('xdg-open %s &' % tmpfile.name)
+    system(f'xdg-open {tmpfile.name} &')
 
 
 def aGx(command):
@@ -277,15 +277,15 @@ def aGx(command):
                 if sub_fcn in calls: # anti loop
                     continue
 
-                if not sub_fcn in graph:
+                if sub_fcn not in graph:
                     graph.add_node(sub_fcn, sub_fcn_addr)
-                
+
                 graph.add_edge(sub_fcn, fcn)
 
                 if sub_fcn in known_subs or len(calls) >= MAX_DEEP:
                     graph.roots.add(sub_fcn)
                     continue
-                
+
                 known_subs.add(sub_fcn)
                 fcns_walk(sub_fcn, calls+[sub_fcn])
 
@@ -300,7 +300,7 @@ def aGx(command):
     try:
         fcns_walk(current_fcn, [current_fcn])
     except Exception as e:
-        print(str(e))
+        print(e)
 
 
     if command == "aGx":
@@ -323,11 +323,11 @@ def aGc(command):
             if xref["type"] == "call":
                 sub_fcn_addr = xref["to"]
                 sub_fcn = r2.cmd("afn @ {addr}".format(addr=sub_fcn_addr)).split('\n')[0] or r2.cmdj("fdj @ {addr}".format(addr=sub_fcn_addr))["name"] or hex(sub_fcn_addr)
-                
+
                 if sub_fcn in calls: # anti loop
                     continue
-                
-                if not sub_fcn in subs:
+
+                if sub_fcn not in subs:
                     subs.add(sub_fcn)
                     graph.add_node(sub_fcn, sub_fcn_addr)
                     graph.add_edge(fcn, sub_fcn)
@@ -335,7 +335,7 @@ def aGc(command):
                         continue
                     known_subs.add(sub_fcn)
                     fcns_walk(sub_fcn, deep+1, calls+[sub_fcn])
-        
+
     current_fcn = r2.cmd("afn").split('\n')[0] or r2.cmdj("fdj")["name"] or r2.cmd("s")
     current_addr = int(r2.cmd("s").split('\n')[0], 16)
     graph.origin = current_fcn
@@ -344,7 +344,7 @@ def aGc(command):
     try:
         fcns_walk(current_fcn, 1, [current_fcn])
     except Exception as e:
-        print(str(e))
+        print(e)
 
 
     if command == "aGc":
@@ -375,18 +375,18 @@ def aGC(command):
             fcn_addr_to = r2.cmd('afo @%d' % xref['addr'])
             fcn_to = r2.cmd('afn @%d' % xref['addr']).split('\n')[0] or unknown()
             if fcn_addr_from and fcn_addr_to:
-                if not fcn_from in graph:
+                if fcn_from not in graph:
                     graph.add_node(fcn_from, fcn_addr_from)
-                
-                if not fcn_to in graph:
+
+                if fcn_to not in graph:
                     graph.add_node(fcn_to, fcn_addr_to)
-                
+
                 graph.add_edge(fcn_from, fcn_to)
                 nodes_from.add(fcn_from)
                 nodes_to.add(fcn_to)
 
     graph.roots = nodes_from - nodes_to
-    
+
     graph_without_loops = Graph()
     graph_without_loops.roots = graph.roots
     graph_without_loops.origin = graph.origin
@@ -394,7 +394,7 @@ def aGC(command):
     def check_loops(node, calls):
         graph_without_loops.add_node(node, graph.node(node))
         for sub_node in nodes[node]:
-            
+
             if sub_node in calls: # anti loop
                 continue
 
@@ -424,10 +424,21 @@ def r2xrefs(_):
 
     def process(command):
         try:
-            if not command in ("aG",
-                "aGx", "aGxv", "aGxd", "aGxw",
-                "aGc", "aGcv", "aGcd", "aGcw",
-                "aGC", "aGCv", "aGCd", "aGCw"):
+            if command not in (
+                "aG",
+                "aGx",
+                "aGxv",
+                "aGxd",
+                "aGxw",
+                "aGc",
+                "aGcv",
+                "aGcd",
+                "aGcw",
+                "aGC",
+                "aGCv",
+                "aGCd",
+                "aGCw",
+            ):
                 return 0
 
             # Parse arguments

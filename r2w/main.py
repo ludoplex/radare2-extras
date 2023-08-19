@@ -42,8 +42,7 @@ def print_exception(type=None, value=None, tb=None, limit=None):
 	if type is None:
 		type, value, tb = sys.exc_info()
 	import traceback
-	ret = "<html><body><h2>Traceback (most recent call last):<h2 />"
-	ret += "<pre>"
+	ret = "<html><body><h2>Traceback (most recent call last):<h2 />" + "<pre>"
 	list = traceback.format_tb(tb, limit) + \
 		traceback.format_exception_only(type, value)
 	ret += "%s: %s<br/>\n" % (
